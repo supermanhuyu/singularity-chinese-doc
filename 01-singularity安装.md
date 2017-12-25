@@ -1,110 +1,76 @@
----
-title: singularity 安装教程
----
+首先安装呢，在Linux，mac和Windows都可以，但是Windows和mac上都是要装`Vagrant` 的，我没整过，请移步[官网](http://singularity.lbl.gov/install-mac)。 下面直接烧Linux系统的安装方式
 
-首先是下载源码，singularity下载地址：<http://singularity.lbl.gov/all-releases>
+1、源码安装
 
-下载到本地之后，解压
+源码包 [下载地址](http://singularity.lbl.gov/all-releases) ，然后解压-编译-安装即可。也可按照如下方式下载制定版本，编译安装。
 
 ```
-tar xvf singularity-2.2.1.tar.gz
-mkdir /gensoft/singularity
-cd singularity-2.2.1/
-./configure 
+VERSION=2.4.2
+wget https://github.com/singularityware/singularity/releases/download/$VERSION/singularity-$VERSION.tar.gz
+tar xvf singularity-$VERSION.tar.gz
+cd singularity-$VERSION
+./configure --prefix=/usr/local
 make
-make install 
+sudo make install
 ```
 
-到这里其实singularity已经安装完毕，下面是参照官网说明做的一个镜像
+或者你直接使用git从[GitHub](https://github.com/singularityware/singularity)上面,下载最新的
 
 ```
-BootStrap: yum
-OSVersion: 7
-MirrorURL: http://mirror.centos.org/centos/7/os/x86_64/
-Include: yum
-
+git clone https://github.com/singularityware/singularity.git
+cd singularity
+./autogen.sh
+./configure --prefix=/usr/local
+make
+sudo make install
 ```
 
-[yhu@master ~]$sudo 
-
-[root@7-2 singularity-2.2.1]#singularity shell --contain /tmp/Centos7.img
-
-Singularity: Invoking an interactive shell within container...
-
-Singularity.Centos7.img> id
-
-uid=0(root) gid=0(root) groups=0(root)
-
-Singularity.Centos7.img> ls /
-
-bin   dev	   etc	 lib	lost+found  mnt  proc  run   singularity  sys  usr
-
-boot  environment  home  lib64	media	    opt  root  sbin  srv	  tmp  var
-
-Singularity.Centos7.img> exit
-
-exit
-
-singularity制作镜像也可以直接从docker的镜像中获取，使用方法如下：
+安装完成之后直接输入`singularity`，即可验证是否安装成功
 
 ```
-[yhu@master ~]$sudo singularity import /tmp/tensorflow.img docker://tensorflow/tensorflow:latest
-tensorflow/tensorflow:latest
-Downloading layer: sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4
+[superman@node7 ~]$singularity 
+USAGE: singularity [global options...] <command> [command options...] ...
+
+GLOBAL OPTIONS:
+    -d|--debug    Print debugging information
+    -h|--help     Display usage summary
 ...
+```
 
-Adding Docker CMD as Singularity runscript...
-Bootstrap initialization
-No bootstrap definition passed, updating container
-Executing Prebootstrap module
-Executing Postbootstrap module
-Done.
+
+
+2、Debian和Ubuntu安装包
+
+ 现在Debian和Ubuntu已经有了安装包，添加源即可apt安装：
+
+```
+sudo wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+sudo apt-get update
+sudo apt-get install -y singularity-container
 
 ```
 
-或者
+3、搭建集群的话，可以制作好RPM/deb包方便部署
+
+a、RPM包制作：
 
 ```
-Bootstrap: docker
-From: tensorflow/tensorflow:latest
-
-%runscript
-
-    exec /usr/bin/python "$@"
-
-%post
-
-    echo "Post install stuffs!"
+git clone https://github.com/singularityware/singularity.git
+cd singularity
+./autogen.sh
+./configure
+make dist
+rpmbuild -ta singularity-*.tar.gz
+sudo yum install ~/rpmbuild/RPMS/*/singularity-[0-9]*.rpm
 ```
 
-```
-#测试结果
-[yhu@master ~]$sudo ./singularity shell /tmp/tensorflow.img 
-Singularity: Invoking an interactive shell within container...
-
-Singularity.tensorflow.img> ls 
-anaconda-ks.cfg       easy-rsa-release-2.x.zip	singularity-2.2.1
-easy-rsa-release-2.x  rpmbuild			singularity-2.2.1.tar.gz
-Singularity.tensorflow.img> python	    
-Python 2.7.12 (default, Nov 19 2016, 06:48:10) 
-[GCC 5.4.0 20160609] on linux2
-Type "help", "copyright", "credits" or "license" for more information.
->>> exit()
-Singularity.tensorflow.img> pwd 
-/root
-Singularity.tensorflow.img> exit
-
+b、deb包制作：
 
 ```
+#安装依赖
+sudo apt-get install -y build-essential libtool autotools-dev automake autoconf 
+fakeroot dpkg-buildpackage -b -us -uc 
+sudo dpkg -i ../singularity-container_2.3_amd64.deb
+```
 
-singularity在官网还有众多详细资料
-
-官方资料：
-
-singularity下载地址：<http://singularity.lbl.gov/all-releases>
-
-安装教程：<http://singularity.lbl.gov/quickstart>
-
-使用docker制作镜像, <http://singularity.lbl.gov/docs-docker#use-a-spec-file>
-
-在centos上构建Ubuntu系统的镜像, <http://singularity.lbl.gov/building-ubuntu-rhel-host>
