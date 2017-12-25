@@ -1,4 +1,4 @@
-首先安装呢，在Linux，mac和Windows都可以，但是Windows和mac上都是要装`Vagrant` 的，我没整过，请移步[官网](http://singularity.lbl.gov/install-mac)。 下面直接烧Linux系统的安装方式
+首先安装呢，在Linux，mac和Windows都可以，但是Windows和mac上都是要装`Vagrant` 的，我没整过，请移步[官网](http://singularity.lbl.gov/install-mac)。 下面直接介绍Linux系统的安装方式
 
 1、源码安装
 
