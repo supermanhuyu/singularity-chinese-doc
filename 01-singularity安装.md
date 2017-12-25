@@ -56,8 +56,8 @@ sudo apt-get install -y singularity-container
 a、RPM包制作：
 
 ```
-git clone https://github.com/singularityware/singularity.git
-cd singularity
+tar xvf singularity-$VERSION.tar.gz
+cd singularity-$VERSION
 ./autogen.sh
 ./configure
 make dist
@@ -70,6 +70,8 @@ b、deb包制作：
 ```
 #安装依赖
 sudo apt-get install -y build-essential libtool autotools-dev automake autoconf 
+tar xvf singularity-$VERSION.tar.gz
+cd singularity-$VERSION
 fakeroot dpkg-buildpackage -b -us -uc 
 sudo dpkg -i ../singularity-container_2.3_amd64.deb
 ```
