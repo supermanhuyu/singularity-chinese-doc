@@ -177,3 +177,81 @@ $ echo "Hello World" > $HOME/hello-kitty.txt
 $ singularity exec vsoch-hello-world-master.simg cat $HOME/hello-kitty.txt
 Hello World
 ```
+
+## 从头构建镜像（Build images from scratch）
+
+从singularity v2.4开始，build默认构建出来的image是以simg结尾的（上面的例子就是）不能修改内容的格式 the squashfs file format.。这种格式保证了随处可用环境统一，而且可通过md5等手段验证是指定images而没有被别人篡改。
+
+但在测试或者开发过程中，你可能想要安装一些包，修改一些文件，直到你满意为止。singularity还有两种其他的image格式：sandbox 格式，就是一个可以chroot的目录； img格式：2.4以前的版本一直用这个，可读可写，如果要修改或者安装到img中的时候，加上`--witable` 选项即可。想要知道singularity关于文件系统个是的更多详细内容，以及他们之间的区别看这里：<http://singularity.lbl.gov/docs-flow>
+
+下面简单介绍这两种种格式使用方法
+
+### Sandbox Directory
+
+构建时加一个`--build` 选项即可
+
+```
+sudo singularity build --sandbox ubuntu/ docker://ubuntu
+```
+
+这样就创建了一个ubuntu 目录，目录中是一个完整的ubuntu系统和一些singularity的元数据，之后你就可以用singularity像使用image一样使用这个目录，包括`shell`，`exec`，`run`等命令，不过你做的修改只对本次有用，当你退出来之后目录中的文件并没有改动，要想修改生效就加一个`--writable`选项
+
+```
+singularity shell --writable ubuntu/
+```
+
+### Writable Image
+
+img格式文件跟sandbox大同小异，构建保存的时候是一个img格式文件，默认只读，要想修改生效就加一个`--writable`选项
+
+```
+sudo singularity build --writable ubuntu.img docker://ubuntu
+sudo singularity shell --writable ubuntu.img
+```
+
+### 格式转换
+
+从一个格式转换到另外一个格式很简单，比如你要从sandbox转换成simg格式(squashfs)的文件
+
+```
+$ singularity build new-squashfs sandbox
+```
+
+### Singularity Recipes
+
+就是singularity的dockerfile，通过这个配置文件配置你想要的image，不过有些关键字不太一样，下面是一个例子
+
+```
+Bootstrap: shub
+From: singularityhub/ubuntu
+
+%runscript
+    exec echo "The runscript is the containers default runtime command!"
+
+%files
+   /home/vanessa/Desktop/hello-kitty.txt        # copied to root of container
+   /home/vanessa/Desktop/party_dinosaur.gif     /opt/the-party-dino.gif #
+
+%environment
+    VARIABLE=MEATBALLVALUE
+    export VARIABLE
+
+%labels
+   AUTHOR vsochat@stanford.edu
+
+%post
+    apt-get update && apt-get -y install python3 git wget
+    mkdir /data
+    echo "The post section is where you can install, and configure your container."
+```
+
+构建命令：
+
+```
+sudo singularity build ubuntu.simg Singularity
+```
+
+上面的命令简单易懂，首先bootstrap是告诉你从singularity hub中获取基础镜像，名称叫`singularityhub/ubuntu` ,`runscript` 运行前执行命令，`files` 要copy到image中的文件，`environment` 环境变量，`labels` 标签，`post` 基础镜像构建完成之后执行的命令。
+
+到这里基本的singularity你就会构建和使用了。
+
